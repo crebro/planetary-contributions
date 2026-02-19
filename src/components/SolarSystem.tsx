@@ -3,7 +3,7 @@ import Orbit from './Orbit';
 import ContributionDot from './ContributionDot';
 import GitHubLogo from './GitHubLogo';
 
-const friction = 0.95;
+const friction = 0.7;
 const lerpFactor = 0.15;
 
 const orbitsConfigs = [
@@ -13,6 +13,8 @@ const orbitsConfigs = [
 
 const SolarSystem: React.FC = () => {
     const [isDragging, setIsDragging] = useState(false);
+    const [hoveredDotIndex, setHoveredDotIndex] = useState<number | null>(null);
+    const [previewPos, setPreviewPos] = useState({ x: 0, y: 0 });
     const [scale, setScale] = useState(1.0);
     const [dotAngles, setDotAngles] = useState<number[]>([
         Math.random() * Math.PI * 2,
@@ -53,25 +55,53 @@ const SolarSystem: React.FC = () => {
     };
 
     useEffect(() => {
-        const handleMouseMove = (e: MouseEvent) => {
-            if (!isDraggingRef.current || !containerRef.current) return;
-
+        const handleGlobalMouseMove = (e: MouseEvent) => {
+            if (!containerRef.current) return;
             const rect = containerRef.current.getBoundingClientRect();
             const relX = e.clientX - rect.left;
             const relY = e.clientY - rect.top;
 
-            const deltaX = relX - lastMousePosRef.current.x;
-            const deltaY = relY - lastMousePosRef.current.y;
+            if (isDraggingRef.current) {
+                const deltaX = relX - lastMousePosRef.current.x;
+                const deltaY = relY - lastMousePosRef.current.y;
 
-            // Use the rotation multiplier captured at the start of the drag
-            const currentRotationDelta = deltaX * -0.01 * rotationMultiplierRef.current;
+                const currentRotationDelta = deltaX * -0.01 * rotationMultiplierRef.current;
+                rotationVelocityRef.current = currentRotationDelta;
+                velocityRef.current = { x: deltaX, y: deltaY };
+                lastMousePosRef.current = { x: relX, y: relY };
 
-            rotationVelocityRef.current = currentRotationDelta;
-            velocityRef.current = { x: deltaX, y: deltaY }; // Keep for scale momentum
-            lastMousePosRef.current = { x: relX, y: relY };
+                setDotAngles(prev => prev.map(a => a + currentRotationDelta));
+                targetScaleRef.current = Math.max(0.3, Math.min(1.5, targetScaleRef.current + deltaY * 0.005));
+                setHoveredDotIndex(null); // Disable hover while dragging
+            } else {
+                // Hover detection
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                const mouseX = relX - centerX;
+                const mouseY = relY - centerY;
 
-            setDotAngles(prev => prev.map(a => a + currentRotationDelta));
-            targetScaleRef.current = Math.max(0.3, Math.min(1.5, targetScaleRef.current + deltaY * 0.005));
+                let bestDot = null;
+                let minDist = 15; // Hover radius
+
+                orbitsConfigs.forEach((config) => {
+                    config.dots.forEach(dotIndex => {
+                        const angle = dotAngles[dotIndex];
+                        const dx = (config.width / 2) * Math.cos(angle);
+                        const dy = (config.height / 2) * Math.sin(angle) * targetScaleRef.current;
+
+                        const dist = Math.sqrt(Math.pow(mouseX - dx, 2) + Math.pow(mouseY - dy, 2));
+                        if (dist < minDist) {
+                            minDist = dist;
+                            bestDot = dotIndex;
+                        }
+                    });
+                });
+
+                setHoveredDotIndex(bestDot);
+                if (bestDot !== null) {
+                    setPreviewPos({ x: e.clientX, y: e.clientY });
+                }
+            }
         };
 
         const handleMouseUp = () => {
@@ -79,13 +109,13 @@ const SolarSystem: React.FC = () => {
             isDraggingRef.current = false;
         };
 
-        window.addEventListener('mousemove', handleMouseMove);
+        window.addEventListener('mousemove', handleGlobalMouseMove);
         window.addEventListener('mouseup', handleMouseUp);
         return () => {
-            window.removeEventListener('mousemove', handleMouseMove);
+            window.removeEventListener('mousemove', handleGlobalMouseMove);
             window.removeEventListener('mouseup', handleMouseUp);
         };
-    }, []);
+    }, [dotAngles, scale]); // Re-bind when state used in calculation updates
 
     useEffect(() => {
         let animationFrame: number;
@@ -156,6 +186,8 @@ const SolarSystem: React.FC = () => {
                                 orbitWidth={config.width}
                                 orbitHeight={config.height}
                                 tilt={scale}
+                                isHovered={hoveredDotIndex === dotIndex}
+                                previewPos={previewPos}
                             />
                         ))}
                     </Orbit>

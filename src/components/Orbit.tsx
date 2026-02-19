@@ -1,20 +1,20 @@
-import React from 'react';
+import React, { memo } from 'react';
 
 interface OrbitProps {
     width: number;
     height: number;
     tilt: number;
-    color?: string;
+    color: string;
     children?: React.ReactNode;
 }
 
-const Orbit: React.FC<OrbitProps> = ({
+const Orbit = memo(({
     width,
     height,
     tilt,
-    color = "#30363d",
-    children
-}) => {
+    color,
+    children,
+}: OrbitProps) => {
     return (
         <div
             className="orbit"
@@ -28,11 +28,12 @@ const Orbit: React.FC<OrbitProps> = ({
                 borderRadius: '50%',
                 transform: `translate(-50%, -50%) scaleY(${tilt})`,
                 pointerEvents: 'none',
+                willChange: 'transform',
             }}
         >
             {children}
         </div>
     );
-};
+});
 
 export default Orbit;
