@@ -2,34 +2,72 @@ import React, { useState, useEffect, useRef } from 'react';
 import Orbit from './Orbit';
 import ContributionDot from './ContributionDot';
 import GitHubLogo from './GitHubLogo';
+import type { OrbitData } from '../App';
 
-const friction = 0.7;
+const friction = 0.95;
 const lerpFactor = 0.15;
 
-const orbitsConfigs = [
-    { width: 550, height: 300, dots: [0, 1], color: "#30363d" },
-    { width: 400, height: 200, dots: [2, 3], color: "#30363d" }
-];
+interface SolarSystemProps {
+    orbitsData: OrbitData[];
+}
 
-const SolarSystem: React.FC = () => {
+const SolarSystem: React.FC<SolarSystemProps> = ({ orbitsData }) => {
     const [isDragging, setIsDragging] = useState(false);
-    const [hoveredDotIndex, setHoveredDotIndex] = useState<number | null>(null);
+    const [hoveredDotId, setHoveredDotId] = useState<string | null>(null);
     const [previewPos, setPreviewPos] = useState({ x: 0, y: 0 });
-    const [scale, setScale] = useState(1.0);
-    const [dotAngles, setDotAngles] = useState<number[]>([
-        Math.random() * Math.PI * 2,
-        Math.random() * Math.PI * 2,
-        Math.random() * Math.PI * 2,
-        Math.random() * Math.PI * 2
-    ]);
+    const [tilt, setTilt] = useState(1.0);
+    const [zoom, setZoom] = useState(1.0);
+    const [dotAngles, setDotAngles] = useState<Record<string, number>>({});
 
     const containerRef = useRef<HTMLDivElement>(null);
     const velocityRef = useRef({ x: 0, y: 0 });
     const rotationVelocityRef = useRef(0);
     const rotationMultiplierRef = useRef(1);
-    const targetScaleRef = useRef(1.0);
+    const targetTiltRef = useRef(1.0);
+    const targetZoomRef = useRef(1.0);
     const lastMousePosRef = useRef({ x: 0, y: 0 });
     const isDraggingRef = useRef(false);
+
+    // Initialize/Update angles for new contributions with minimum separation
+    useEffect(() => {
+        setDotAngles(prev => {
+            const next = { ...prev };
+            const minSeparation = 0.4; // Radians (~23 degrees)
+
+            orbitsData.forEach(orbit => {
+                const existingAnglesInOrbit: number[] = [];
+
+                // Collect existing angles for this orbit
+                orbit.contributions.forEach(c => {
+                    if (next[c.id] !== undefined) {
+                        existingAnglesInOrbit.push(next[c.id]);
+                    }
+                });
+
+                orbit.contributions.forEach(c => {
+                    if (next[c.id] === undefined) {
+                        let angle = Math.random() * Math.PI * 2;
+                        let attempts = 0;
+                        let isTooClose = true;
+
+                        while (isTooClose && attempts < 50) {
+                            angle = Math.random() * Math.PI * 2;
+                            isTooClose = existingAnglesInOrbit.some(existing => {
+                                const diff = Math.abs(existing - angle);
+                                const circularDiff = Math.min(diff, Math.PI * 2 - diff);
+                                return circularDiff < minSeparation;
+                            });
+                            attempts++;
+                        }
+
+                        next[c.id] = angle;
+                        existingAnglesInOrbit.push(angle);
+                    }
+                });
+            });
+            return next;
+        });
+    }, [orbitsData]);
 
     const lerp = (current: number, target: number, factor: number) => {
         return current + (target - current) * factor;
@@ -70,35 +108,45 @@ const SolarSystem: React.FC = () => {
                 velocityRef.current = { x: deltaX, y: deltaY };
                 lastMousePosRef.current = { x: relX, y: relY };
 
-                setDotAngles(prev => prev.map(a => a + currentRotationDelta));
-                targetScaleRef.current = Math.max(0.3, Math.min(1.5, targetScaleRef.current + deltaY * 0.005));
-                setHoveredDotIndex(null); // Disable hover while dragging
+                setDotAngles(prev => {
+                    const next = { ...prev };
+                    Object.keys(next).forEach(id => {
+                        next[id] += currentRotationDelta;
+                    });
+                    return next;
+                });
+
+                // Dragging Y controls TILT (perspective)
+                targetTiltRef.current = Math.max(0.2, Math.min(1.2, targetTiltRef.current + deltaY * 0.005));
+                setHoveredDotId(null);
             } else {
                 // Hover detection
                 const centerX = rect.width / 2;
                 const centerY = rect.height / 2;
-                const mouseX = relX - centerX;
-                const mouseY = relY - centerY;
+                const mouseX = (relX - centerX) / targetZoomRef.current;
+                const mouseY = (relY - centerY) / targetZoomRef.current;
 
-                let bestDot = null;
-                let minDist = 15; // Hover radius
+                let bestDotId = null;
+                let minDist = 15;
 
-                orbitsConfigs.forEach((config) => {
-                    config.dots.forEach(dotIndex => {
-                        const angle = dotAngles[dotIndex];
-                        const dx = (config.width / 2) * Math.cos(angle);
-                        const dy = (config.height / 2) * Math.sin(angle) * targetScaleRef.current;
+                orbitsData.forEach((orbit) => {
+                    orbit.contributions.forEach(c => {
+                        const angle = dotAngles[c.id];
+                        if (angle === undefined) return;
+
+                        const dx = (orbit.width / 2) * Math.cos(angle);
+                        const dy = (orbit.height / 2) * Math.sin(angle) * targetTiltRef.current;
 
                         const dist = Math.sqrt(Math.pow(mouseX - dx, 2) + Math.pow(mouseY - dy, 2));
                         if (dist < minDist) {
                             minDist = dist;
-                            bestDot = dotIndex;
+                            bestDotId = c.id;
                         }
                     });
                 });
 
-                setHoveredDotIndex(bestDot);
-                if (bestDot !== null) {
+                setHoveredDotId(bestDotId);
+                if (bestDotId !== null) {
                     setPreviewPos({ x: e.clientX, y: e.clientY });
                 }
             }
@@ -109,26 +157,50 @@ const SolarSystem: React.FC = () => {
             isDraggingRef.current = false;
         };
 
+        const handleWheel = (e: WheelEvent) => {
+            e.preventDefault();
+            const zoomSpeed = 0.001;
+            // Wheel controls ZOOM (global scale)
+            targetZoomRef.current = Math.max(0.5, Math.min(3.0, targetZoomRef.current - e.deltaY * zoomSpeed));
+        };
+
+        const container = containerRef.current;
+        if (container) {
+            container.addEventListener('wheel', handleWheel, { passive: false });
+        }
+
         window.addEventListener('mousemove', handleGlobalMouseMove);
         window.addEventListener('mouseup', handleMouseUp);
         return () => {
+            if (container) {
+                container.removeEventListener('wheel', handleWheel);
+            }
             window.removeEventListener('mousemove', handleGlobalMouseMove);
             window.removeEventListener('mouseup', handleMouseUp);
         };
-    }, [dotAngles, scale]); // Re-bind when state used in calculation updates
+    }, [dotAngles, orbitsData, zoom, tilt]);
 
     useEffect(() => {
         let animationFrame: number;
 
         const update = () => {
-            setScale(current => lerp(current, targetScaleRef.current, lerpFactor));
+            setTilt(current => lerp(current, targetTiltRef.current, lerpFactor));
+            setZoom(current => lerp(current, targetZoomRef.current, lerpFactor));
 
             if (!isDraggingRef.current) {
                 const hasMomentum = Math.abs(rotationVelocityRef.current) > 0.0001 || Math.abs(velocityRef.current.y) > 0.01;
 
                 if (hasMomentum) {
-                    setDotAngles(prev => prev.map(a => a + rotationVelocityRef.current));
-                    targetScaleRef.current = Math.max(0.3, Math.min(1.5, targetScaleRef.current + velocityRef.current.y * 0.002));
+                    setDotAngles(prev => {
+                        const next = { ...prev };
+                        Object.keys(next).forEach(id => {
+                            next[id] += rotationVelocityRef.current;
+                        });
+                        return next;
+                    });
+
+                    // Momentum affects TILT
+                    targetTiltRef.current = Math.max(0.2, Math.min(1.2, targetTiltRef.current + velocityRef.current.y * 0.002));
 
                     rotationVelocityRef.current *= friction;
                     velocityRef.current.y *= friction;
@@ -152,7 +224,7 @@ const SolarSystem: React.FC = () => {
             onMouseDown={handleMouseDown}
             style={{
                 position: 'relative',
-                width: 'calc(100% * 2/3)',
+                width: '100%',
                 height: '100vh',
                 overflow: 'hidden',
                 display: 'flex',
@@ -167,26 +239,28 @@ const SolarSystem: React.FC = () => {
                     position: 'relative',
                     width: 0,
                     height: 0,
+                    transform: `scale(${zoom})`,
                 }}
             >
 
                 <GitHubLogo size={50} />
-                {orbitsConfigs.map((config, i) => (
+                {orbitsData.map((orbit, i) => (
                     <Orbit
                         key={i}
-                        width={config.width}
-                        height={config.height}
-                        tilt={scale}
-                        color={config.color}
+                        width={orbit.width}
+                        height={orbit.height}
+                        tilt={tilt}
+                        color={orbit.color}
                     >
-                        {config.dots.map(dotIndex => (
+                        {orbit.contributions.map(c => (
                             <ContributionDot
-                                key={dotIndex}
-                                angle={dotAngles[dotIndex]}
-                                orbitWidth={config.width}
-                                orbitHeight={config.height}
-                                tilt={scale}
-                                isHovered={hoveredDotIndex === dotIndex}
+                                key={c.id}
+                                contribution={c}
+                                angle={dotAngles[c.id] || 0}
+                                orbitWidth={orbit.width}
+                                orbitHeight={orbit.height}
+                                tilt={tilt}
+                                isHovered={hoveredDotId === c.id}
                                 previewPos={previewPos}
                             />
                         ))}

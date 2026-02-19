@@ -1,7 +1,9 @@
 import { memo } from 'react';
 import { createPortal } from 'react-dom';
+import type { Contribution } from '../App';
 
 interface ContributionDotProps {
+    contribution: Contribution;
     angle: number;
     orbitWidth: number;
     orbitHeight: number;
@@ -12,6 +14,7 @@ interface ContributionDotProps {
 }
 
 const ContributionDot = memo(({
+    contribution,
     angle,
     orbitWidth,
     orbitHeight,
@@ -23,8 +26,21 @@ const ContributionDot = memo(({
     const x = (orbitWidth / 2) * Math.cos(angle);
     const y = (orbitHeight / 2) * Math.sin(angle);
 
-    // Preview data
-    const previewImg = "https://opengraph.githubassets.com/1a2b3c/facebook/react/pull/27000";
+    // Dynamic OG Preview URL construction
+    let previewImg = "";
+    const repoParts = contribution.repo.split('/');
+    const owner = repoParts[0];
+    const repo = repoParts[1];
+
+    if (contribution.type === 'PR') {
+        previewImg = `https://opengraph.githubassets.com/1/${owner}/${repo}/pull/${contribution.number}`;
+    } else if (contribution.type === 'ISSUE') {
+        previewImg = `https://opengraph.githubassets.com/1/${owner}/${repo}/issues/${contribution.number}`;
+    } else if (contribution.type === 'COMMIT') {
+        // Commits don't have a specific OG image for individual commits easily, 
+        // using the repo og image as a fallback
+        previewImg = `https://opengraph.githubassets.com/1/${owner}/${repo}`;
+    }
 
     return (
         <>

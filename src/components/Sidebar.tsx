@@ -5,9 +5,20 @@ interface SidebarProps {
     onUsernameChange: (val: string) => void;
     pat: string;
     onPatChange: (val: string) => void;
+    onFetch: () => void;
+    isLoading: boolean;
+    error: string | null;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ username, onUsernameChange, pat, onPatChange }) => {
+const Sidebar: React.FC<SidebarProps> = ({
+    username,
+    onUsernameChange,
+    pat,
+    onPatChange,
+    onFetch,
+    isLoading,
+    error,
+}) => {
     return (
         <div
             className="sidebar"
@@ -71,6 +82,32 @@ const Sidebar: React.FC<SidebarProps> = ({ username, onUsernameChange, pat, onPa
                     Requires <code>read:user</code> permissions.
                 </p>
             </div>
+
+            <button
+                onClick={onFetch}
+                disabled={isLoading || !username || !pat}
+                style={{
+                    background: '#238636',
+                    color: '#ffffff',
+                    border: '1px solid rgba(240, 246, 252, 0.1)',
+                    borderRadius: '6px',
+                    padding: '12px',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    cursor: (isLoading || !username || !pat) ? 'not-allowed' : 'pointer',
+                    opacity: (isLoading || !username || !pat) ? 0.6 : 1,
+                    transition: 'all 0.2s',
+                    marginTop: '12px',
+                }}
+            >
+                {isLoading ? 'Fetching...' : 'Show Contributions'}
+            </button>
+
+            {error && (
+                <p style={{ color: '#f85149', fontSize: '12px', background: 'rgba(248, 81, 73, 0.1)', padding: '10px', borderRadius: '6px', border: '1px solid rgba(248, 81, 73, 0.2)' }}>
+                    {error}
+                </p>
+            )}
 
             <div style={{ marginTop: 'auto', borderTop: '1px solid #30363d', paddingTop: '20px' }}>
                 <p style={{ color: '#8b949e', fontSize: '12px', textAlign: 'center' }}>
