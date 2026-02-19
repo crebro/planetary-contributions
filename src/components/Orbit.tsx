@@ -28,7 +28,6 @@ const Orbit = memo(({
                 borderRadius: '50%',
                 transform: `translate(-50%, -50%) scaleY(${tilt})`,
                 pointerEvents: 'none',
-                willChange: 'transform',
             }}
         >
             {children}

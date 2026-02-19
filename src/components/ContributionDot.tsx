@@ -58,7 +58,6 @@ const ContributionDot = memo(({
                     cursor: 'pointer',
                     zIndex: 20,
                     pointerEvents: 'auto',
-                    willChange: 'transform',
                 }}
             >
                 <style dangerouslySetInnerHTML={{
