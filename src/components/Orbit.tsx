@@ -5,6 +5,7 @@ interface OrbitProps {
     height: number;
     tilt: number;
     color: string;
+    glowEnabled: boolean;
     children?: React.ReactNode;
 }
 
@@ -13,6 +14,7 @@ const Orbit = memo(({
     height,
     tilt,
     color,
+    glowEnabled,
     children,
 }: OrbitProps) => {
     return (
@@ -27,6 +29,7 @@ const Orbit = memo(({
                 border: `1px solid ${color}`,
                 borderRadius: '50%',
                 transform: `translate(-50%, -50%) scaleY(${tilt})`,
+                boxShadow: glowEnabled ? `0 0 15px ${color}33, inset 0 0 15px ${color}11` : 'none',
                 pointerEvents: 'none',
             }}
         >

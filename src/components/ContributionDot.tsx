@@ -8,6 +8,8 @@ interface ContributionDotProps {
     orbitWidth: number;
     orbitHeight: number;
     tilt: number;
+    zoom: number;
+    glowEnabled: boolean;
     color?: string;
     isHovered: boolean;
     previewPos: { x: number; y: number };
@@ -19,6 +21,8 @@ const ContributionDot = memo(({
     orbitWidth,
     orbitHeight,
     tilt,
+    zoom,
+    glowEnabled,
     color = "#2dba4e",
     isHovered,
     previewPos,
@@ -55,6 +59,7 @@ const ContributionDot = memo(({
                     top: '50%',
                     left: '50%',
                     transform: `translate(-50%, -50%) translate(${x}px, ${y}px) scaleY(${1 / tilt})`,
+                    boxShadow: glowEnabled ? `0 0 10px ${color}, 0 0 20px ${color}` : 'none',
                     cursor: 'pointer',
                     zIndex: 20,
                     pointerEvents: 'auto',
@@ -76,7 +81,8 @@ const ContributionDot = memo(({
                         position: 'fixed',
                         left: previewPos.x,
                         top: previewPos.y - 20,
-                        transform: 'translateX(-50%) translateY(-100%)',
+                        transform: `translateX(-50%) translateY(-100%) scale(${zoom})`,
+                        transformOrigin: 'bottom center',
                         width: '191px',
                         height: '100px',
                         background: '#161b22',

@@ -9,9 +9,10 @@ const lerpFactor = 0.15;
 
 interface SolarSystemProps {
     orbitsData: OrbitData[];
+    glowEnabled: boolean;
 }
 
-const SolarSystem: React.FC<SolarSystemProps> = ({ orbitsData }) => {
+const SolarSystem: React.FC<SolarSystemProps> = ({ orbitsData, glowEnabled }) => {
     const [isDragging, setIsDragging] = useState(false);
     const [hoveredDotId, setHoveredDotId] = useState<string | null>(null);
     const [previewPos, setPreviewPos] = useState({ x: 0, y: 0 });
@@ -160,8 +161,33 @@ const SolarSystem: React.FC<SolarSystemProps> = ({ orbitsData }) => {
         const handleWheel = (e: WheelEvent) => {
             e.preventDefault();
             const zoomSpeed = 0.001;
-            // Wheel controls ZOOM (global scale)
-            targetZoomRef.current = Math.max(0.5, Math.min(3.0, targetZoomRef.current - e.deltaY * zoomSpeed));
+            const newZoom = Math.max(0.5, Math.min(3.0, targetZoomRef.current - e.deltaY * zoomSpeed));
+            targetZoomRef.current = newZoom;
+
+            // Update preview position if a dot is hovered to keep it pinned
+            if (hoveredDotId) {
+                const rect = containerRef.current?.getBoundingClientRect();
+                if (rect) {
+                    const centerX = rect.width / 2;
+                    const centerY = rect.height / 2;
+
+                    orbitsData.forEach(orbit => {
+                        orbit.contributions.forEach(c => {
+                            if (c.id === hoveredDotId) {
+                                const angle = dotAngles[c.id];
+                                if (angle !== undefined) {
+                                    const dx = (orbit.width / 2) * Math.cos(angle) * newZoom;
+                                    const dy = (orbit.height / 2) * Math.sin(angle) * targetTiltRef.current * newZoom;
+                                    setPreviewPos({
+                                        x: rect.left + centerX + dx,
+                                        y: rect.top + centerY + dy
+                                    });
+                                }
+                            }
+                        });
+                    });
+                }
+            }
         };
 
         const container = containerRef.current;
@@ -251,6 +277,7 @@ const SolarSystem: React.FC<SolarSystemProps> = ({ orbitsData }) => {
                         height={orbit.height}
                         tilt={tilt}
                         color={orbit.color}
+                        glowEnabled={glowEnabled}
                     >
                         {orbit.contributions.map(c => (
                             <ContributionDot
@@ -260,6 +287,8 @@ const SolarSystem: React.FC<SolarSystemProps> = ({ orbitsData }) => {
                                 orbitWidth={orbit.width}
                                 orbitHeight={orbit.height}
                                 tilt={tilt}
+                                zoom={zoom}
+                                glowEnabled={glowEnabled}
                                 isHovered={hoveredDotId === c.id}
                                 previewPos={previewPos}
                             />

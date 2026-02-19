@@ -70,6 +70,7 @@ export interface OrbitData {
 function App() {
   const [username, setUsername] = useState(() => localStorage.getItem('github_username') || '');
   const [pat, setPat] = useState(() => localStorage.getItem('github_pat') || '');
+  const [glowEnabled, setGlowEnabled] = useState(() => localStorage.getItem('glow_enabled') !== 'false');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [orbits, setOrbits] = useState<OrbitData[]>([]);
@@ -94,6 +95,10 @@ function App() {
   useEffect(() => {
     localStorage.setItem('github_pat', pat);
   }, [pat]);
+
+  useEffect(() => {
+    localStorage.setItem('glow_enabled', String(glowEnabled));
+  }, [glowEnabled]);
 
   const fetchContributions = async () => {
     setIsLoading(true);
@@ -184,15 +189,17 @@ function App() {
     <div className="App" style={{ display: 'flex', width: '100vw', height: '100vh', overflow: 'hidden' }}>
       <Sidebar
         username={username}
-        onUsernameChange={setUsername}
+        setUsername={setUsername}
         pat={pat}
-        onPatChange={setPat}
+        setPat={setPat}
         onFetch={fetchContributions}
         isLoading={isLoading}
         error={error}
+        glowEnabled={glowEnabled}
+        setGlowEnabled={setGlowEnabled}
       />
       <div className="solar-system-slot" style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <SolarSystem orbitsData={orbits} />
+        <SolarSystem orbitsData={orbits} glowEnabled={glowEnabled} />
       </div>
     </div>
   );

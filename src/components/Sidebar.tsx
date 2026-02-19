@@ -2,22 +2,26 @@ import React from 'react';
 
 interface SidebarProps {
     username: string;
-    onUsernameChange: (val: string) => void;
+    setUsername: (val: string) => void;
     pat: string;
-    onPatChange: (val: string) => void;
+    setPat: (val: string) => void;
     onFetch: () => void;
     isLoading: boolean;
     error: string | null;
+    glowEnabled: boolean;
+    setGlowEnabled: (v: boolean) => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
     username,
-    onUsernameChange,
+    setUsername,
     pat,
-    onPatChange,
+    setPat,
     onFetch,
     isLoading,
     error,
+    glowEnabled,
+    setGlowEnabled,
 }) => {
     return (
         <div
@@ -47,7 +51,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 <input
                     type="text"
                     value={username}
-                    onChange={(e) => onUsernameChange(e.target.value)}
+                    onChange={(e) => setUsername(e.target.value)}
                     placeholder="e.g. facebook"
                     style={{
                         background: '#010409',
@@ -66,7 +70,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 <input
                     type="password"
                     value={pat}
-                    onChange={(e) => onPatChange(e.target.value)}
+                    onChange={(e) => setPat(e.target.value)}
                     placeholder="ghp_xxxxxxxxxxxx"
                     style={{
                         background: '#010409',
@@ -83,6 +87,18 @@ const Sidebar: React.FC<SidebarProps> = ({
                 </p>
             </div>
 
+            <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', cursor: 'pointer', color: '#8b949e', fontSize: '0.9rem' }}>
+                    <input
+                        type="checkbox"
+                        checked={glowEnabled}
+                        onChange={(e) => setGlowEnabled(e.target.checked)}
+                        style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                    />
+                    Atmospheric Glow
+                </label>
+            </div>
+
             <button
                 onClick={onFetch}
                 disabled={isLoading || !username || !pat}
@@ -97,7 +113,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                     cursor: (isLoading || !username || !pat) ? 'not-allowed' : 'pointer',
                     opacity: (isLoading || !username || !pat) ? 0.6 : 1,
                     transition: 'all 0.2s',
-                    marginTop: '12px',
+                    marginTop: '0px',
                 }}
             >
                 {isLoading ? 'Fetching...' : 'Show Contributions'}
