@@ -46,7 +46,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             }}
         >
             <div className="sidebar-header">
-                <h1 style={{ fontSize: '24px', fontWeight: '600', marginBottom: '8px' }}>GitHub Solar</h1>
+                <h1 style={{ fontSize: '24px', fontWeight: '600', marginBottom: '8px' }}>GitHub Planetary Contributions</h1>
                 <p style={{ color: '#8b949e', fontSize: '14px' }}>
                     Visualize your contributions as a planetary system.
                 </p>
