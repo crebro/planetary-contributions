@@ -158,6 +158,98 @@ function App() {
       />
       <div className="solar-system-slot" style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <SolarSystem orbitsData={orbits} glowEnabled={glowEnabled} />
+
+        {/* Footer Actions */}
+        <div style={{
+          position: 'absolute',
+          bottom: '24px',
+          right: '24px',
+          display: 'flex',
+          gap: '12px',
+          zIndex: 1000,
+        }}>
+          <div style={{ position: 'relative' }} className="export-btn-container">
+            <button
+              style={{
+                background: '#161b22',
+                color: '#f0f6fc',
+                border: '1px solid #30363d',
+                borderRadius: '6px',
+                padding: '8px 12px',
+                fontSize: '14px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                height: "100%"
+              }}
+              onMouseEnter={(e) => {
+                const tooltip = e.currentTarget.parentElement?.querySelector('.tooltip');
+                if (tooltip) (tooltip as HTMLElement).style.opacity = '1';
+              }}
+              onMouseLeave={(e) => {
+                const tooltip = e.currentTarget.parentElement?.querySelector('.tooltip');
+                if (tooltip) (tooltip as HTMLElement).style.opacity = '0';
+              }}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width={16}
+                height={16}
+                fill="currentColor"
+                className="bi bi-send"
+                viewBox="0 0 16 16"
+              >
+                <path d="M15.854.146a.5.5 0 0 1 .11.54l-5.819 14.547a.75.75 0 0 1-1.329.124l-3.178-4.995L.643 7.184a.75.75 0 0 1 .124-1.33L15.314.037a.5.5 0 0 1 .54.11ZM6.636 10.07l2.761 4.338L14.13 2.576zm6.787-8.201L1.591 6.602l4.339 2.76z" />
+              </svg>
+              Export
+            </button>
+            <div className="tooltip" style={{
+              position: 'absolute',
+              top: '-35px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              background: '#0d1117',
+              color: '#8b949e',
+              border: '1px solid #30363d',
+              padding: '4px 8px',
+              borderRadius: '4px',
+              fontSize: '12px',
+              pointerEvents: 'none',
+              opacity: 0,
+              transition: 'opacity 0.2s',
+              whiteSpace: 'nowrap',
+              zIndex: 1001,
+            }}>
+              Coming Soon
+            </div>
+          </div>
+
+          <a
+            href="https://github.com/crebro/planetary-contributions"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              background: '#161b22',
+              color: '#f0f6fc',
+              border: '1px solid #30363d',
+              borderRadius: '6px',
+              padding: '8px 12px',
+              fontSize: '14px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              textDecoration: 'none',
+              transition: 'all 0.2s',
+            }}
+          >
+            <svg height="16" width="16" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
+            </svg>
+            GitHub
+          </a>
+        </div>
       </div>
     </div>
   );

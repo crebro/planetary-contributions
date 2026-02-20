@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { Contribution } from '../App';
 
@@ -29,6 +29,7 @@ const ContributionDot = memo(({
 }: ContributionDotProps) => {
     const x = (orbitWidth / 2) * Math.cos(angle);
     const y = (orbitHeight / 2) * Math.sin(angle);
+    const [imageLoading, setImageLoading] = useState(true);
 
     // Dynamic OG Preview URL construction
     let previewImg = "";
@@ -112,10 +113,28 @@ const ContributionDot = memo(({
                             borderBottom: '1px solid #30363d',
                         }}
                     />
+                    {imageLoading && (
+                        <div style={{
+                            color: '#8b949e',
+                            fontSize: '12px',
+                            position: 'absolute',
+                            zIndex: 1,
+                        }}>
+                            Loading...
+                        </div>
+                    )}
                     <img
                         src={previewImg}
                         alt="Contribution Preview"
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                            opacity: imageLoading ? 0 : 1,
+                            transition: 'opacity 0.2s',
+                        }}
+                        onLoad={() => setImageLoading(false)}
+                        onError={() => setImageLoading(false)}
                     />
                 </div>,
                 document.body
