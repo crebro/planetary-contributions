@@ -33,7 +33,7 @@ const SolarSystem: React.FC<SolarSystemProps> = ({ orbitsData, glowEnabled }) =>
     useEffect(() => {
         setDotAngles(prev => {
             const next = { ...prev };
-            const minSeparation = 0.4; // Radians (~23 degrees)
+            const minSeparation = 0.1; // Radians (~23 degrees)
 
             orbitsData.forEach(orbit => {
                 const existingAnglesInOrbit: number[] = [];
@@ -118,7 +118,7 @@ const SolarSystem: React.FC<SolarSystemProps> = ({ orbitsData, glowEnabled }) =>
                 });
 
                 // Dragging Y controls TILT (perspective)
-                targetTiltRef.current = Math.max(0.2, Math.min(1.2, targetTiltRef.current + deltaY * 0.005));
+                targetTiltRef.current = Math.max(0.4, Math.min(1.2, targetTiltRef.current + deltaY * 0.005));
                 setHoveredDotId(null);
             } else {
                 // Hover detection
@@ -226,7 +226,7 @@ const SolarSystem: React.FC<SolarSystemProps> = ({ orbitsData, glowEnabled }) =>
                     });
 
                     // Momentum affects TILT
-                    targetTiltRef.current = Math.max(0.2, Math.min(1.2, targetTiltRef.current + velocityRef.current.y * 0.002));
+                    targetTiltRef.current = Math.max(0.4, Math.min(1.2, targetTiltRef.current + velocityRef.current.y * 0.002));
 
                     rotationVelocityRef.current *= friction;
                     velocityRef.current.y *= friction;

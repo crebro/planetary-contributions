@@ -69,7 +69,7 @@ const ContributionDot = memo(({
                     __html: `
            @keyframes fadeInUp {
             from { opacity: 0; transform: translateX(-50%) translateY(calc(-100% + 10px)); }
-            to { opacity: 1; transform: translateX(-50%) translateY(-100%); }
+            to { opacity: 1; transform: translateX(-50%) translateY(-100%) scale(${zoom}); }
           }
         `}} />
             </div>
