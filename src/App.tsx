@@ -3,52 +3,6 @@ import SolarSystem from './components/SolarSystem';
 import Sidebar from './components/Sidebar';
 import './App.css';
 
-const GITHUB_GRAPHQL_QUERY = `
-query ProfilePublicContributions($login: String!) {
-  user(login: $login) {
-    contributionsCollection {
-      pullRequestContributions(first: 20) {
-        nodes {
-          occurredAt
-          pullRequest {
-            title
-            url
-            number
-            repository {
-              nameWithOwner
-            }
-          }
-        }
-      }
-      issueContributions(first: 20) {
-        nodes {
-          occurredAt
-          issue {
-            title
-            url
-            number
-            repository {
-              nameWithOwner
-            }
-          }
-        }
-      }
-      commitContributionsByRepository(maxRepositories: 10) {
-        repository {
-          nameWithOwner
-        }
-        contributions(first: 10) {
-          nodes {
-            occurredAt
-            commitCount
-          }
-        }
-      }
-    }
-  }
-}
-`;
-
 export interface Contribution {
   id: string;
   type: 'PR' | 'ISSUE' | 'COMMIT';
@@ -69,11 +23,23 @@ export interface OrbitData {
 
 function App() {
   const [username, setUsername] = useState(() => localStorage.getItem('github_username') || '');
-  const [pat, setPat] = useState(() => localStorage.getItem('github_pat') || '');
   const [glowEnabled, setGlowEnabled] = useState(() => localStorage.getItem('glow_enabled') !== 'false');
+  const [isAuthenticated, setIsAuthenticated] = useState(() => localStorage.getItem('authenticated') === 'true');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [orbits, setOrbits] = useState<OrbitData[]>([]);
+
+  // Check for OAuth callback success
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const login_success = params.get('login_success');
+    if (login_success === 'true') {
+      localStorage.setItem('authenticated', 'true');
+      setIsAuthenticated(true);
+      // Clean up URL
+      window.history.replaceState({}, document.title, "/");
+    }
+  }, []);
 
   // Load orbits from localStorage on mount
   useEffect(() => {
@@ -93,37 +59,30 @@ function App() {
   }, [username]);
 
   useEffect(() => {
-    localStorage.setItem('github_pat', pat);
-  }, [pat]);
-
-  useEffect(() => {
     localStorage.setItem('glow_enabled', String(glowEnabled));
   }, [glowEnabled]);
 
   const fetchContributions = async () => {
+    if (!isAuthenticated) {
+      setError("Please login with GitHub first.");
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch('https://api.github.com/graphql', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${pat}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          query: GITHUB_GRAPHQL_QUERY,
-          variables: { login: username },
-        }),
-      });
-
+      const response = await fetch(`/api/contributions?username=${username}`);
       const result = await response.json();
 
       if (result.errors) {
         throw new Error(result.errors[0].message);
       }
 
-      const collection = result.data.user.contributionsCollection;
+      if (!result.data || !result.data.user) {
+        throw new Error('User not found or API error');
+      }
 
+      const collection = result.data.user.contributionsCollection;
       const mappedOrbits: OrbitData[] = [];
 
       // Orbit 1: Pull Requests
@@ -190,13 +149,12 @@ function App() {
       <Sidebar
         username={username}
         setUsername={setUsername}
-        pat={pat}
-        setPat={setPat}
         onFetch={fetchContributions}
         isLoading={isLoading}
         error={error}
         glowEnabled={glowEnabled}
         setGlowEnabled={setGlowEnabled}
+        isAuthenticated={isAuthenticated}
       />
       <div className="solar-system-slot" style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <SolarSystem orbitsData={orbits} glowEnabled={glowEnabled} />
