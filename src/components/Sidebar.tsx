@@ -106,13 +106,13 @@ const Sidebar: React.FC<SidebarProps> = ({
 
                 </div>
 
-                <div className="input-group" style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
+                <div className="input-group" style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '14px' }}>
                     <label style={{ fontSize: '14px', fontWeight: '500' }}>GitHub Username</label>
                     <input
                         type="text"
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
-                        placeholder="e.g. facebook"
+                        placeholder="e.g. torvalds"
                         style={{
                             background: '#010409',
                             border: '1px solid #30363d',
@@ -163,12 +163,6 @@ const Sidebar: React.FC<SidebarProps> = ({
                     {error}
                 </p>
             )}
-
-            <div style={{ marginTop: '20px', borderTop: '1px solid #30363d', paddingTop: '20px' }}>
-                <p style={{ color: '#8b949e', fontSize: '12px', textAlign: 'center' }}>
-                    Celestial visualization powered by React.
-                </p>
-            </div>
         </div>
     );
 };
